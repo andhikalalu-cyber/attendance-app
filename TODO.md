@@ -1,0 +1,8 @@
+- [x] Update data structure in script.js to support multiple classes
+- [x] Update HTML UI for class selection and adding new class
+- [x] Modify JS functions to work with current class (add student, attendance, reports, export)
+- [x] Update styles.css for better appearance
+- [x] Test the functionality (server running, code reviewed)
+- [x] Add manual save button
+- [x] Add view data menu to display last input data
+- [x] Add delete class menu

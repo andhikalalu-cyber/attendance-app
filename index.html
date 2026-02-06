@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Attendance App</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <h1>Simple Attendance App</h1>
+    <div id="current-date"></div>
+    <div id="teacher-section">
+        <label for="teacher-name">Nama Guru:</label>
+        <input type="text" id="teacher-name" placeholder="Masukkan nama guru">
+        <button id="save-teacher">Simpan Guru</button>
+    </div>
+    <div id="class-section">
+        <label for="class-select">Pilih Kelas:</label>
+        <select id="class-select"></select>
+        <label for="new-class">Kelas Baru:</label>
+        <input type="text" id="new-class" placeholder="Masukkan nama kelas baru">
+        <button id="add-class">Tambah Kelas</button>
+        <button id="delete-class">Hapus Kelas</button>
+    </div>
+    <div id="add-student-section">
+        <h2>Tambah Murid</h2>
+        <input type="text" id="new-student" placeholder="Nama murid baru">
+        <button id="add-student">Tambah</button>
+    </div>
+    <div id="attendance-section">
+        <h2>Mark Attendance for Today</h2>
+        <div id="student-list"></div>
+    </div>
+    <div id="reports-section">
+        <h2>Attendance Reports</h2>
+        <div id="reports"></div>
+    </div>
+    <div id="view-data-section">
+        <h2>Data Terakhir</h2>
+        <div id="view-data"></div>
+    </div>
+    <div id="export-section">
+        <h2>Export</h2>
+        <button id="export-excel">Export to Excel</button>
+        <button id="export-pdf">Export to PDF</button>
+        <button id="export-data">Export Data</button>
+        <input type="file" id="import-data" accept=".json" style="display: none;">
+        <button id="import-data-btn">Import Data</button>
+        <button id="print-page">Print Page</button>
+        <button id="save-data">Simpan Data</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
