@@ -13,6 +13,23 @@ window.addEventListener('load', async () => {
     await loadDataFromServer();
     updateDateTime();
     setInterval(updateDateTime, 1000);
+    // Quiet diagnostics on load (logs only)
+    try {
+        const jspdfPresent = !!window.jspdf;
+        console.log('Diagnostics (quiet): window.jspdf =', jspdfPresent);
+        if (jspdfPresent && window.jspdf.jsPDF) {
+            try {
+                const doc = new window.jspdf.jsPDF();
+                console.log('Diagnostics (quiet): doc.autoTable =', typeof doc.autoTable === 'function');
+            } catch (e) {
+                console.log('Diagnostics (quiet): failed to instantiate jsPDF:', e.message);
+            }
+        } else {
+            console.log('Diagnostics (quiet): window.jspdf.jsPDF missing');
+        }
+    } catch (e) {
+        console.log('Diagnostics (quiet) error:', e.message);
+    }
 });
 
 // ===== DATA MANAGEMENT =====
