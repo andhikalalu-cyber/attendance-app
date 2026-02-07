@@ -56,7 +56,7 @@ async function saveDataToServer() {
 }
 
 // ===== ATTENDANCE FUNCTIONS =====
-function markAttendance(student, status) {
+async function markAttendance(student, status) {
     // Initialize today's data if not exists
     if (!attendanceData[today]) {
         attendanceData[today] = { hadir: [], alpha: [], sakit: [], izin: [] };

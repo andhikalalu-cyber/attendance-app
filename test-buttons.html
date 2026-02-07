@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Buttons</title>
+    <style>
+        .student {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            margin: 10px 0;
+            gap: 10px;
+        }
+        .btn-status {
+            padding: 8px 11px;
+            border: 2px solid #bdc3c7;
+            border-radius: 5px;
+            background: #ecf0f1;
+            color: #34495e;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-status.active {
+            border: 2px solid #0f3460;
+            background: #0f3460;
+            color: white;
+        }
+        .remove-btn {
+            padding: 8px 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Button Rendering</h1>
+    <div id="test-container"></div>
+
+    <script>
+        const students = ['Budi', 'Siti', 'Rudi'];
+        const container = document.getElementById('test-container');
+        
+        students.forEach(student => {
+            const div = document.createElement('div');
+            div.className = 'student';
+            div.innerHTML = `
+                <span>${student}</span>
+                <div>
+                    <button class="btn-status">✓ Hadir</button>
+                    <button class="btn-status">✗ Alpha</button>
+                    <button class="btn-status">🏥 Sakit</button>
+                    <button class="btn-status">📄 Izin</button>
+                    <button class="remove-btn">Hapus</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    </script>
+</body>
+</html>
