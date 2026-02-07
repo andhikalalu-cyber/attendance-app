@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,48 +9,81 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <h1>Absen Siswa SMK Yarsi Mataram</h1>
-    <div id="current-date"></div>
-    <div id="teacher-section">
-        <label for="teacher-name">Nama Guru:</label>
-        <input type="text" id="teacher-name" placeholder="Masukkan nama guru">
-        <button id="save-teacher">Simpan Guru</button>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>Absen Siswa SMK Yarsi Mataram</h1>
+                    <p class="subtitle">Sistem Manajemen Absensi</p>
+                </div>
+                <div id="current-date" class="current-date"></div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel: Setup -->
+            <aside class="sidebar">
+                <section class="card">
+                    <h3>👨‍🏫 Guru</h3>
+                    <input type="text" id="teacher-name" placeholder="Nama guru" class="input">
+                    <button id="save-teacher" class="btn btn-primary">Simpan</button>
+                </section>
+
+                <section class="card">
+                    <h3>📚 Kelas</h3>
+                    <select id="class-select" class="input"></select>
+                    <div class="input-group">
+                        <input type="text" id="new-class" placeholder="Kelas baru" class="input">
+                        <button id="add-class" class="btn btn-secondary">+</button>
+                        <button id="delete-class" class="btn btn-danger">✕</button>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h3>👥 Murid</h3>
+                    <div class="input-group">
+                        <input type="text" id="new-student" placeholder="Nama murid" class="input">
+                        <button id="add-student" class="btn btn-secondary">+</button>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h3>⚙️ Tools</h3>
+                    <button id="export-excel" class="btn btn-small">📊 Excel</button>
+                    <button id="export-pdf" class="btn btn-small">📄 PDF</button>
+                    <button id="export-data" class="btn btn-small">💾 JSON</button>
+                    <button id="import-data-btn" class="btn btn-small">📤 Import</button>
+                    <button id="print-page" class="btn btn-small">🖨️ Print</button>
+                    <button id="save-data" class="btn btn-primary" style="width: 100%;">💾 Simpan Data</button>
+                    <input type="file" id="import-data" accept=".json" style="display: none;">
+                </section>
+            </aside>
+
+            <!-- Right Panel: Content -->
+            <section class="content">
+                <!-- Attendance Section -->
+                <div class="card">
+                    <h3>📋 Absensi Hari Ini</h3>
+                    <div id="student-list" class="student-list"></div>
+                </div>
+
+                <!-- Reports Section -->
+                <div class="card">
+                    <h3>📈 Laporan Kehadiran</h3>
+                    <div id="reports" class="reports"></div>
+                </div>
+
+                <!-- View Data Section -->
+                <div class="card">
+                    <h3>📊 Data Ringkas</h3>
+                    <div id="view-data" class="view-data"></div>
+                </div>
+            </section>
+        </main>
     </div>
-    <div id="class-section">
-        <label for="class-select">Pilih Kelas:</label>
-        <select id="class-select"></select>
-        <label for="new-class">Kelas Baru:</label>
-        <input type="text" id="new-class" placeholder="Masukkan nama kelas baru">
-        <button id="add-class">Tambah Kelas</button>
-        <button id="delete-class">Hapus Kelas</button>
-    </div>
-    <div id="add-student-section">
-        <h2>Tambah Murid</h2>
-        <input type="text" id="new-student" placeholder="Nama murid baru">
-        <button id="add-student">Tambah</button>
-    </div>
-    <div id="attendance-section">
-        <h2>Mark Attendance for Today</h2>
-        <div id="student-list"></div>
-    </div>
-    <div id="reports-section">
-        <h2>Attendance Reports</h2>
-        <div id="reports"></div>
-    </div>
-    <div id="view-data-section">
-        <h2>Data Terakhir</h2>
-        <div id="view-data"></div>
-    </div>
-    <div id="export-section">
-        <h2>Export</h2>
-        <button id="export-excel">Export to Excel</button>
-        <button id="export-pdf">Export to PDF</button>
-        <button id="export-data">Export Data</button>
-        <input type="file" id="import-data" accept=".json" style="display: none;">
-        <button id="import-data-btn">Import Data</button>
-        <button id="print-page">Print Page</button>
-        <button id="save-data">Simpan Data</button>
-    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

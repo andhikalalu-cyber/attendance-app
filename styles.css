@@ -1,363 +1,374 @@
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* Global Styles */
+* {
     margin: 0;
-    padding: 20px;
-    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-    min-height: 100vh;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #333;
     font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
 }
 
-h1 {
-    color: #fff;
-    font-size: 32px;
-    text-align: center;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    margin-bottom: 30px;
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
 }
 
-h2 {
-    color: #333;
-    font-size: 20px;
+/* Header */
+.header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 30px 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-bottom: 3px solid #667eea;
 }
 
-#current-date {
-    text-align: center;
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+}
+
+.header h1 {
+    font-size: 28px;
+    color: #667eea;
+    margin: 0;
+    font-weight: 700;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 5px 0 0 0;
+}
+
+.current-date {
+    font-size: 14px;
+    color: #666;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Main Layout */
+.main-content {
+    display: flex;
+    gap: 30px;
+    padding: 30px 40px;
+    min-height: calc(100vh - 150px);
+}
+
+.sidebar {
+    flex: 0 0 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Cards */
+.card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card h3 {
     font-size: 18px;
-    margin-bottom: 20px;
+    margin: 0 0 20px 0;
+    color: #333;
+    font-weight: 600;
 }
 
-#student-list {
-    margin-bottom: 20px;
+/* Form Elements */
+.input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    margin-bottom: 12px;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+select.input {
+    cursor: pointer;
+    padding: 12px 15px;
+}
+
+.input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.input-group .input {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* Buttons */
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+    border: 1px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background: #e8e8e8;
+    border-color: #d0d0d0;
+}
+
+.btn-danger {
+    background: #ff6b6b;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #ee5a52;
+    transform: translateY(-2px);
+}
+
+.btn-small {
+    padding: 8px 12px;
+    font-size: 13px;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+/* Student List */
+.student-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .student {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(3px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    margin-bottom: 10px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease;
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
 }
 
 .student:hover {
-    transform: scale(1.02);
+    background: #f5f5f5;
+    border-color: #667eea;
 }
 
 .student span {
     flex: 1;
-    font-size: 18px;
+    font-weight: 500;
+    color: #333;
 }
 
 .student div {
     display: flex;
-    gap: 10px;
+    gap: 8px;
 }
 
 .student button {
-    padding: 10px 15px;
+    padding: 8px 12px;
     border: none;
-    border-radius: 25px;
+    border-radius: 6px;
+    font-size: 13px;
     cursor: pointer;
-    font-size: 16px;
-    min-width: 80px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    position: relative;
-    overflow: hidden;
-}
-
-.student button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-}
-
-.student button:hover::before {
-    left: 100%;
-}
-
-.student button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+    font-weight: 600;
 }
 
 .present-btn {
-    background: linear-gradient(45deg, #4CAF50, #66BB6A);
+    background: #51cf66;
     color: white;
 }
 
 .present-btn:hover {
-    background: linear-gradient(45deg, #45a049, #5CB85C);
+    background: #40c057;
+    transform: scale(1.05);
 }
 
 .absent-btn {
-    background: linear-gradient(45deg, #f44336, #EF5350);
+    background: #ff8787;
     color: white;
 }
 
 .absent-btn:hover {
-    background: linear-gradient(45deg, #d32f2f, #E53935);
+    background: #ff6b6b;
+    transform: scale(1.05);
 }
 
 .remove-btn {
-    background: linear-gradient(45deg, #f44336, #EF5350);
+    background: #ffa8a8;
     color: white;
 }
 
 .remove-btn:hover {
-    background: linear-gradient(45deg, #d32f2f, #E53935);
+    background: #ff8787;
+    transform: scale(1.05);
 }
 
-#reports {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+/* Reports */
+.reports {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .report-item {
-    margin-bottom: 10px;
-    font-size: 16px;
+    padding: 12px;
+    background: #f9f9f9;
+    border-left: 4px solid #667eea;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #555;
 }
 
-#export-section {
-    text-align: center;
-    margin-top: 20px;
+/* View Data */
+.view-data {
+    font-size: 14px;
+    color: #666;
 }
 
-#export-section button {
-    padding: 15px 20px;
-    background: linear-gradient(45deg, #2196F3, #21CBF3);
-    color: white;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 16px;
-    margin: 5px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+.view-data p {
+    margin: 8px 0;
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border-left: 3px solid #667eea;
 }
 
-#export-section button:hover {
-    background: linear-gradient(45deg, #0b7dda, #0b9dda);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.6);
-}
-
-#teacher-section, #class-section, #add-student-section {
-    margin-bottom: 20px;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-#teacher-section:hover, #class-section:hover, #add-student-section:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-}
-
-#teacher-section label {
-    display: block;
-    margin-bottom: 10px;
-    font-size: 16px;
-}
-
-#teacher-section input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-#teacher-section button {
-    padding: 10px 15px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    width: 100%;
-}
-
-#teacher-section button:hover {
-    background-color: #45a049;
-}
-
-#add-student-section h2 {
-    margin-top: 0;
-}
-
-#add-student-section input {
-    width: calc(100% - 22px);
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-#add-student-section button {
-    padding: 10px 15px;
-    background-color: #2196F3;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    width: 100%;
-}
-
-#add-student-section button:hover {
-    background-color: #0b7dda;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-    body {
-        padding: 10px;
-        font-size: 14px;
-    }
-
-    h1 {
-        font-size: 24px;
-        margin-bottom: 20px;
-    }
-
-    h2 {
-        font-size: 18px;
-    }
-
-    #current-date {
-        font-size: 16px;
-        margin-bottom: 15px;
-    }
-
-    #teacher-section, #class-section, #add-student-section {
-        padding: 15px;
-        margin-bottom: 15px;
-    }
-
-    #teacher-section label, #class-section label {
-        font-size: 14px;
-        margin-bottom: 5px;
-    }
-
-    #teacher-section input, #class-section input, #add-student-section input {
-        width: 100%;
-        padding: 12px;
-        font-size: 16px;
-        margin-bottom: 10px;
-        box-sizing: border-box;
-    }
-
-    #teacher-section button, #class-section button, #add-student-section button {
-        width: 100%;
-        padding: 12px;
-        font-size: 16px;
-    }
-
-    #class-section {
-        display: flex;
+/* Responsive */
+@media (max-width: 1024px) {
+    .main-content {
         flex-direction: column;
-        gap: 10px;
+        padding: 20px 30px;
     }
 
-    #class-section label {
-        font-weight: bold;
+    .sidebar {
+        flex: 1;
     }
 
-    #class-section select {
-        padding: 12px;
+    .header-content {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .current-date {
+        text-align: left;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 20px 20px;
+        border-bottom: 2px solid #667eea;
+    }
+
+    .header h1 {
+        font-size: 22px;
+    }
+
+    .subtitle {
+        font-size: 12px;
+    }
+
+    .main-content {
+        flex-direction: column;
+        padding: 15px 20px;
+        gap: 15px;
+    }
+
+    .sidebar {
+        flex: 1;
+    }
+
+    .content {
+        gap: 15px;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .card h3 {
         font-size: 16px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    #class-section input {
-        box-sizing: border-box;
-    }
-
-    #class-section button {
-        box-sizing: border-box;
+        margin-bottom: 15px;
     }
 
     .student {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 12px;
-        margin-bottom: 8px;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
     .student span {
-        font-size: 16px;
-        margin-bottom: 10px;
-        text-align: center;
+        flex: 0 0 100%;
     }
 
     .student div {
-        display: flex;
-        gap: 8px;
-        justify-content: space-between;
+        flex: 0 0 100%;
+        width: 100%;
     }
 
     .student button {
         flex: 1;
-        padding: 10px;
-        font-size: 14px;
-        min-width: 0;
     }
 
-    #reports {
-        padding: 15px;
-    }
-
-    .report-item {
-        font-size: 14px;
-        margin-bottom: 8px;
-    }
-
-    #view-data-section {
-        padding: 15px;
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        margin-bottom: 15px;
-    }
-
-    #export-section {
-        display: flex;
+    .input-group {
         flex-direction: column;
-        gap: 10px;
     }
 
-    #export-section button {
+    .input-group .btn {
         width: 100%;
-        padding: 12px;
-        font-size: 16px;
-        margin: 0;
+        margin-bottom: 0;
     }
 }
