@@ -1,7 +1,3 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const fs = require('fs');
-
 // Check if Supabase is configured
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -13,8 +9,18 @@ if (useSupabase) {
   const { createClient } = require('@supabase/supabase-js');
   exports.supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 } else {
-  // Initialize SQLite database (cross-platform tmp directory)
+  // For serverless (Netlify), require Supabase env vars
+  // For local, try SQLite fallback
+  if (process.env.NODE_ENV === 'production' || !process.env.LOCAL) {
+    throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are required');
+  }
+  
+  // Local SQLite fallback
+  const sqlite3 = require('sqlite3').verbose();
+  const path = require('path');
+  const fs = require('fs');
   const os = require('os');
+  
   const tmpDir = os.tmpdir();
   const dataDir = path.join(tmpDir, 'attendance-app');
   try {
