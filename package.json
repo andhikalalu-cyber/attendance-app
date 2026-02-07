@@ -1,7 +1,7 @@
 {
-  "name": "attendance-app",
+  "name": "absen-siswa-smk-yarsi",
   "version": "1.0.0",
-  "description": "Simple Attendance Application",
+  "description": "Absen Siswa SMK Yarsi - Attendance Management System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

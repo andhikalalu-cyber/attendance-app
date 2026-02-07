@@ -1,4 +1,4 @@
-# 📋 Ringkasan Setup Aplikasi Multi-User Attendance
+# 📋 Absen Siswa SMK Yarsi - Sistem Manajemen Absensi
 
 ## ✅ Yang Sudah Siap
 
