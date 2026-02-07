@@ -232,34 +232,132 @@ h2 {
 }
 
 /* Mobile responsiveness */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     body {
-        margin: 5px;
+        padding: 10px;
+        font-size: 14px;
     }
 
     h1 {
-        font-size: 20px;
+        font-size: 24px;
+        margin-bottom: 20px;
     }
 
     h2 {
         font-size: 18px;
     }
 
+    #current-date {
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+
+    #teacher-section, #class-section, #add-student-section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    #teacher-section label, #class-section label {
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    #teacher-section input, #class-section input, #add-student-section input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        margin-bottom: 10px;
+        box-sizing: border-box;
+    }
+
+    #teacher-section button, #class-section button, #add-student-section button {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+
+    #class-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #class-section label {
+        font-weight: bold;
+    }
+
+    #class-section select {
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    #class-section input {
+        box-sizing: border-box;
+    }
+
+    #class-section button {
+        box-sizing: border-box;
+    }
+
     .student {
         flex-direction: column;
         align-items: stretch;
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+
+    .student span {
+        font-size: 16px;
+        margin-bottom: 10px;
+        text-align: center;
     }
 
     .student div {
-        justify-content: center;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
     }
 
     .student button {
         flex: 1;
+        padding: 10px;
+        font-size: 14px;
+        min-width: 0;
+    }
+
+    #reports {
+        padding: 15px;
+    }
+
+    .report-item {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    #view-data-section {
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        margin-bottom: 15px;
+    }
+
+    #export-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
 
     #export-section button {
         width: 100%;
-        margin: 5px 0;
+        padding: 12px;
+        font-size: 16px;
+        margin: 0;
     }
 }

@@ -4,11 +4,19 @@ async function loadDataFromServer() {
         const response = await fetch('/api/data');
         data = await response.json();
         currentClassIndex = data.currentClassIndex;
-        currentClass = data.classes[currentClassIndex];
-        teacherName = currentClass.teacher;
-        students = currentClass.students;
-        attendanceData = currentClass.attendanceData;
-        document.getElementById('teacher-name').value = teacherName;
+        if (data.classes.length > 0) {
+            currentClass = data.classes[currentClassIndex];
+            teacherName = currentClass.teacher;
+            students = currentClass.students;
+            attendanceData = currentClass.attendanceData;
+            document.getElementById('teacher-name').value = teacherName;
+        } else {
+            currentClass = null;
+            teacherName = '';
+            students = [];
+            attendanceData = {};
+            document.getElementById('teacher-name').value = '';
+        }
         renderClassSelect();
         renderAttendance();
         renderReports();
@@ -17,15 +25,23 @@ async function loadDataFromServer() {
         console.error('Error loading data:', error);
         // Fallback to default
         data = {
-            classes: [{ name: 'Default Class', teacher: '', students: ['Alice', 'Bob', 'Charlie', 'Diana'], attendanceData: {} }],
+            classes: [],
             currentClassIndex: 0
         };
         currentClassIndex = data.currentClassIndex;
-        currentClass = data.classes[currentClassIndex];
-        teacherName = currentClass.teacher;
-        students = currentClass.students;
-        attendanceData = currentClass.attendanceData;
-        document.getElementById('teacher-name').value = teacherName;
+        if (data.classes.length > 0) {
+            currentClass = data.classes[currentClassIndex];
+            teacherName = currentClass.teacher;
+            students = currentClass.students;
+            attendanceData = currentClass.attendanceData;
+            document.getElementById('teacher-name').value = teacherName;
+        } else {
+            currentClass = null;
+            teacherName = '';
+            students = [];
+            attendanceData = {};
+            document.getElementById('teacher-name').value = '';
+        }
         renderClassSelect();
         renderAttendance();
         renderReports();
@@ -119,7 +135,7 @@ function renderViewData() {
     const div = document.createElement('div');
     div.innerHTML = `
         <p><strong>Nama Guru:</strong> ${teacherName || 'Belum disimpan'}</p>
-        <p><strong>Kelas Saat Ini:</strong> ${currentClass.name}</p>
+        <p><strong>Kelas Saat Ini:</strong> ${currentClass ? currentClass.name : 'Belum ada kelas'}</p>
         <p><strong>Murid:</strong> ${students.length > 0 ? students.join(', ') : 'Belum ada'}</p>
         <p><strong>Data Absen:</strong> ${Object.keys(attendanceData).length} hari tercatat</p>
         <p><strong>Hadir Hari Ini (${todayDate}):</strong> ${presentToday.length > 0 ? presentToday.join(', ') : 'Belum ada'}</p>
@@ -129,6 +145,10 @@ function renderViewData() {
 }
 
 function exportToExcel() {
+    if (!currentClass) {
+        alert('Tidak ada kelas yang dipilih!');
+        return;
+    }
     const now = new Date();
     const exportDateTime = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}`;
     const data = [
@@ -177,6 +197,10 @@ function exportToExcel() {
 }
 
 function exportToPDF() {
+    if (!currentClass) {
+        alert('Tidak ada kelas yang dipilih!');
+        return;
+    }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const now = new Date();
@@ -236,10 +260,17 @@ function importData(event) {
             try {
                 const importedData = JSON.parse(e.target.result);
                 data = importedData;
-                teacherName = data.classes[data.currentClassIndex].teacher;
-                students = data.classes[data.currentClassIndex].students;
-                attendanceData = data.classes[data.currentClassIndex].attendanceData;
-                document.getElementById('teacher-name').value = teacherName;
+                if (data.classes.length > 0) {
+                    teacherName = data.classes[data.currentClassIndex].teacher;
+                    students = data.classes[data.currentClassIndex].students;
+                    attendanceData = data.classes[data.currentClassIndex].attendanceData;
+                    document.getElementById('teacher-name').value = teacherName;
+                } else {
+                    teacherName = '';
+                    students = [];
+                    attendanceData = {};
+                    document.getElementById('teacher-name').value = '';
+                }
                 renderClassSelect();
                 renderAttendance();
                 renderReports();
@@ -276,6 +307,10 @@ setInterval(updateDateTime, 1000);
 
 // Functions for teacher and students
 async function saveTeacher() {
+    if (!currentClass) {
+        alert('Pilih kelas dulu!');
+        return;
+    }
     const input = document.getElementById('teacher-name');
     teacherName = input.value.trim();
     currentClass.teacher = teacherName;
@@ -290,7 +325,11 @@ async function addClass() {
     if (name && !data.classes.some(c => c.name === name)) {
         data.classes.push({ name: name, teacher: '', students: [], attendanceData: {} });
         input.value = '';
-        renderClassSelect();
+        if (data.classes.length === 1) {
+            selectClass(0);
+        } else {
+            renderClassSelect();
+        }
         alert('Kelas baru ditambahkan!');
     } else {
         alert('Nama kelas tidak valid atau sudah ada!');
