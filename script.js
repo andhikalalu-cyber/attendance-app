@@ -1,7 +1,7 @@
 // Load data from server
 async function loadDataFromServer() {
     try {
-        const response = await fetch('/api/data');
+        const response = await fetch('/.netlify/functions/api-data');
         data = await response.json();
         currentClassIndex = data.currentClassIndex;
         if (data.classes.length > 0) {
@@ -52,7 +52,7 @@ async function loadDataFromServer() {
 // Save data to server
 async function saveDataToServer() {
     try {
-        const response = await fetch('/api/data', {
+        const response = await fetch('/.netlify/functions/api-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
