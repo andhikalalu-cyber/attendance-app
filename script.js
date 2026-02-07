@@ -70,18 +70,19 @@ const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
 async function markAttendance(student, status) {
     if (!attendanceData[today]) {
-        attendanceData[today] = [];
+        attendanceData[today] = { hadir: [], alpha: [], sakit: [], izin: [] };
     }
-    if (status === 'present') {
-        if (!attendanceData[today].includes(student)) {
-            attendanceData[today].push(student);
-        }
-    } else {
-        const index = attendanceData[today].indexOf(student);
-        if (index > -1) {
-            attendanceData[today].splice(index, 1);
-        }
+    
+    // Remove from all categories first
+    ['hadir', 'alpha', 'sakit', 'izin'].forEach(s => {
+        attendanceData[today][s] = attendanceData[today][s].filter(name => name !== student);
+    });
+    
+    // Add to selected status
+    if (status && attendanceData[today][status]) {
+        attendanceData[today][status].push(student);
     }
+    
     currentClass.attendanceData = attendanceData;
     data.classes[currentClassIndex] = currentClass;
     renderAttendance();
@@ -95,11 +96,23 @@ function renderAttendance() {
     students.forEach(student => {
         const div = document.createElement('div');
         div.className = 'student';
+        
+        // Get current status for this student
+        let currentStatus = null;
+        if (attendanceData[today]) {
+            if (attendanceData[today].hadir?.includes(student)) currentStatus = 'hadir';
+            else if (attendanceData[today].alpha?.includes(student)) currentStatus = 'alpha';
+            else if (attendanceData[today].sakit?.includes(student)) currentStatus = 'sakit';
+            else if (attendanceData[today].izin?.includes(student)) currentStatus = 'izin';
+        }
+        
         div.innerHTML = `
             <span>${student}</span>
             <div>
-                <button class="present-btn" onclick="markAttendance('${student}', 'present')">Present</button>
-                <button class="absent-btn" onclick="markAttendance('${student}', 'absent')">Absent</button>
+                <button class="btn-status ${currentStatus === 'hadir' ? 'active' : ''}" onclick="markAttendance('${student}', 'hadir')">✓ Hadir</button>
+                <button class="btn-status ${currentStatus === 'alpha' ? 'active' : ''}" onclick="markAttendance('${student}', 'alpha')">✗ Alpha</button>
+                <button class="btn-status ${currentStatus === 'sakit' ? 'active' : ''}" onclick="markAttendance('${student}', 'sakit')">🏥 Sakit</button>
+                <button class="btn-status ${currentStatus === 'izin' ? 'active' : ''}" onclick="markAttendance('${student}', 'izin')">📄 Izin</button>
                 <button class="remove-btn" onclick="removeStudent('${student}')">Hapus</button>
             </div>
         `;
@@ -112,16 +125,16 @@ function renderReports() {
     reports.innerHTML = '';
     const totalDays = Object.keys(attendanceData).length;
     students.forEach(student => {
-        let presentDays = 0;
+        let hariDays = 0;
         Object.values(attendanceData).forEach(day => {
-            if (day.includes(student)) {
-                presentDays++;
+            if (day.hadir?.includes(student)) {
+                hariDays++;
             }
         });
-        const percentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(2) : 0;
+        const percentage = totalDays > 0 ? ((hariDays / totalDays) * 100).toFixed(2) : 0;
         const div = document.createElement('div');
         div.className = 'report-item';
-        div.innerHTML = `${student}: ${presentDays}/${totalDays} days (${percentage}%)`;
+        div.innerHTML = `${student}: ${hariDays} Hadir / ${totalDays} hari (${percentage}%)`;
         reports.appendChild(div);
     });
 }
@@ -129,17 +142,22 @@ function renderReports() {
 function renderViewData() {
     const viewData = document.getElementById('view-data');
     viewData.innerHTML = '';
-    const presentToday = attendanceData[today] || [];
-    const absentToday = students.filter(s => !presentToday.includes(s));
+    const todayData = attendanceData[today] || { hadir: [], alpha: [], sakit: [], izin: [] };
+    const hariToday = todayData.hadir || [];
+    const alphaToday = todayData.alpha || [];
+    const sakitToday = todayData.sakit || [];
+    const izinToday = todayData.izin || [];
     const todayDate = new Date().toLocaleDateString('id-ID');
     const div = document.createElement('div');
     div.innerHTML = `
-        <p><strong>Nama Guru:</strong> ${teacherName || 'Belum disimpan'}</p>
-        <p><strong>Kelas Saat Ini:</strong> ${currentClass ? currentClass.name : 'Belum ada kelas'}</p>
-        <p><strong>Murid:</strong> ${students.length > 0 ? students.join(', ') : 'Belum ada'}</p>
-        <p><strong>Data Absen:</strong> ${Object.keys(attendanceData).length} hari tercatat</p>
-        <p><strong>Hadir Hari Ini (${todayDate}):</strong> ${presentToday.length > 0 ? presentToday.join(', ') : 'Belum ada'}</p>
-        <p><strong>Tidak Hadir Hari Ini (${todayDate}):</strong> ${absentToday.length > 0 ? absentToday.join(', ') : 'Semua hadir'}</p>
+        <p><strong>👨‍🏫 Nama Guru:</strong> ${teacherName || 'Belum disimpan'}</p>
+        <p><strong>📚 Kelas Saat Ini:</strong> ${currentClass ? currentClass.name : 'Belum ada kelas'}</p>
+        <p><strong>👥 Total Murid:</strong> ${students.length > 0 ? students.length : '0'}</p>
+        <p><strong>📅 Total Hari Kerja:</strong> ${Object.keys(attendanceData).length} hari</p>
+        <p><strong>✓ Hadir (${todayDate}):</strong> ${hariToday.length > 0 ? hariToday.join(', ') : '-'}</p>
+        <p><strong>✗ Alpha (${todayDate}):</strong> ${alphaToday.length > 0 ? alphaToday.join(', ') : '-'}</p>
+        <p><strong>🏥 Sakit (${todayDate}):</strong> ${sakitToday.length > 0 ? sakitToday.join(', ') : '-'}</p>
+        <p><strong>📄 Izin (${todayDate}):</strong> ${izinToday.length > 0 ? izinToday.join(', ') : '-'}</p>
     `;
     viewData.appendChild(div);
 }
@@ -171,30 +189,35 @@ function exportToExcel() {
     ];
     
     // Add summary data
-    summaryData.push(['No', 'Nama Siswa', 'Hadir', 'Total Hari', 'Persentase']);
+    summaryData.push(['No', 'Nama Siswa', 'Hadir', 'Alpha', 'Sakit', 'Izin', 'Total Hari', 'Persentase']);
     students.forEach((student, idx) => {
         const totalDays = dates.length;
-        let presentDays = 0;
+        let hariDays = 0, alphaDays = 0, sakitDays = 0, izinDays = 0;
         dates.forEach(date => {
-            if (attendanceData[date].includes(student)) {
-                presentDays++;
-            }
+            const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
+            if (dayData.hadir?.includes(student)) hariDays++;
+            if (dayData.alpha?.includes(student)) alphaDays++;
+            if (dayData.sakit?.includes(student)) sakitDays++;
+            if (dayData.izin?.includes(student)) izinDays++;
         });
-        const percentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(2) : 0;
+        const percentage = totalDays > 0 ? ((hariDays / totalDays) * 100).toFixed(2) : 0;
         summaryData.push([
             idx + 1,
             student,
-            presentDays,
+            hariDays,
+            alphaDays,
+            sakitDays,
+            izinDays,
             totalDays,
             `${percentage}%`
         ]);
     });
     
     const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
-    ws1['!cols'] = [{ wch: 5 }, { wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 15 }];
+    ws1['!cols'] = [{ wch: 5 }, { wch: 25 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 15 }];
     
     // Set header styling
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
         const cell = ws1[XLSX.utils.encode_col(i) + '10'];
         if (cell) cell.s = { bold: true, fill: { fgColor: { rgb: 'FFD966' } }, alignment: { horizontal: 'center' } };
     }
@@ -214,11 +237,18 @@ function exportToExcel() {
     
     dates.forEach(date => {
         const row = [date];
+        const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
         students.forEach(student => {
-            if (attendanceData[date].includes(student)) {
+            if (dayData.hadir?.includes(student)) {
                 row.push('Hadir');
+            } else if (dayData.alpha?.includes(student)) {
+                row.push('Alpha');
+            } else if (dayData.sakit?.includes(student)) {
+                row.push('Sakit');
+            } else if (dayData.izin?.includes(student)) {
+                row.push('Izin');
             } else {
-                row.push('Absen');
+                row.push('-');
             }
         });
         detailData.push(row);
@@ -280,33 +310,46 @@ function exportToPDF() {
     
     students.forEach((student, idx) => {
         const totalDays = dates.length;
-        let presentDays = 0;
+        let hariDays = 0;
+        let alphaDays = 0;
+        let sakitDays = 0;
+        let izinDays = 0;
+        
         dates.forEach(date => {
-            if (attendanceData[date].includes(student)) {
-                presentDays++;
-            }
+            const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
+            if (dayData.hadir?.includes(student)) hariDays++;
+            else if (dayData.alpha?.includes(student)) alphaDays++;
+            else if (dayData.sakit?.includes(student)) sakitDays++;
+            else if (dayData.izin?.includes(student)) izinDays++;
         });
-        const percentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(2) : 0;
+        
+        const percentage = totalDays > 0 ? ((hariDays / totalDays) * 100).toFixed(2) : 0;
         summaryTable.push([
             (idx + 1).toString(),
             student,
-            presentDays.toString(),
+            hariDays.toString(),
+            alphaDays.toString(),
+            sakitDays.toString(),
+            izinDays.toString(),
             totalDays.toString(),
             `${percentage}%`
         ]);
     });
     
     doc.autoTable({
-        head: [summaryTable[0]],
+        head: [['No', 'Nama Siswa', 'Hadir', 'Alpha', 'Sakit', 'Izin', 'Total', 'Persentase']],
         body: summaryTable.slice(1),
         startY: yPos,
         margin: { left: 15, right: 15 },
         columnStyles: {
-            0: { cellWidth: 12, halign: 'center' },
-            1: { cellWidth: 90, halign: 'left' },
-            2: { cellWidth: 25, halign: 'center' },
-            3: { cellWidth: 25, halign: 'center' },
-            4: { cellWidth: 28, halign: 'center' }
+            0: { cellWidth: 10, halign: 'center' },
+            1: { cellWidth: 60, halign: 'left' },
+            2: { cellWidth: 15, halign: 'center' },
+            3: { cellWidth: 15, halign: 'center' },
+            4: { cellWidth: 15, halign: 'center' },
+            5: { cellWidth: 15, halign: 'center' },
+            6: { cellWidth: 15, halign: 'center' },
+            7: { cellWidth: 18, halign: 'center' }
         },
         headStyles: { fillColor: [100, 150, 200], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
         bodyStyles: { textColor: [0, 0, 0] },
@@ -332,8 +375,13 @@ function exportToPDF() {
         
         dates.forEach(date => {
             const row = [date];
+            const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
             students.slice(0, 4).forEach(student => {
-                row.push(attendanceData[date].includes(student) ? '✓ H' : '✗ A');
+                if (dayData.hadir?.includes(student)) row.push('✓ H');
+                else if (dayData.alpha?.includes(student)) row.push('✗ A');
+                else if (dayData.sakit?.includes(student)) row.push('🏥 S');
+                else if (dayData.izin?.includes(student)) row.push('📄 I');
+                else row.push('-');
             });
             dailyTable.push(row);
         });
@@ -524,9 +572,14 @@ async function addStudent() {
 
 async function removeStudent(student) {
     students = students.filter(s => s !== student);
-    // Also remove from attendance data
+    // Also remove from attendance data from all status arrays
     Object.keys(attendanceData).forEach(day => {
-        attendanceData[day] = attendanceData[day].filter(s => s !== student);
+        if (attendanceData[day]) {
+            attendanceData[day].hadir = attendanceData[day].hadir?.filter(s => s !== student) || [];
+            attendanceData[day].alpha = attendanceData[day].alpha?.filter(s => s !== student) || [];
+            attendanceData[day].sakit = attendanceData[day].sakit?.filter(s => s !== student) || [];
+            attendanceData[day].izin = attendanceData[day].izin?.filter(s => s !== student) || [];
+        }
     });
     currentClass.students = students;
     currentClass.attendanceData = attendanceData;
