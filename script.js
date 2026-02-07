@@ -431,6 +431,30 @@ async function exportToPDF() {
         return;
     }
     
+    // First try server-side PDF generation
+    try {
+        const payload = { currentClass, students, attendanceData, teacherName };
+        const resp = await fetch('/.netlify/functions/generate-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (resp.ok) {
+            const arrayBuffer = await resp.arrayBuffer();
+            const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Absensi_${currentClass.name}_${new Date().toISOString().slice(0,10)}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+            return;
+        }
+        // if server fails, fallback to client-side below
+    } catch (err) {
+        console.warn('Server PDF generation failed, falling back to client methods', err);
+    }
+
     try {
         const doc = new window.jspdf.jsPDF();
         const dates = Object.keys(attendanceData).sort();
