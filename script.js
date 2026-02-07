@@ -214,8 +214,24 @@ function exportToExcel() {
     });
     
     const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
-    ws1['!cols'] = [{ wch: 5 }, { wch: 25 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 15 }];
-    
+    ws1['!cols'] = [{ wch: 5 }, { wch: 25 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 15 }];    
+    // Style summary table header
+    for (let i = 0; i < 8; i++) {
+        const cellRef = XLSX.utils.encode_col(i) + '1';
+        if (ws1[cellRef]) {
+            ws1[cellRef].s = {
+                fill: { fgColor: { rgb: 'FF4472C4' } },
+                font: { bold: true, color: { rgb: 'FFFFFFFF' } },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: {
+                    top: { style: 'thin', color: { rgb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { rgb: 'FF000000' } },
+                    left: { style: 'thin', color: { rgb: 'FF000000' } },
+                    right: { style: 'thin', color: { rgb: 'FF000000' } }
+                }
+            };
+        }
+    }    
     // Set header styling
     for (let i = 0; i < 8; i++) {
         const cell = ws1[XLSX.utils.encode_col(i) + '10'];
@@ -256,6 +272,24 @@ function exportToExcel() {
     
     const ws2 = XLSX.utils.aoa_to_sheet(detailData);
     ws2['!cols'] = [{ wch: 15 }, ...students.map(() => ({ wch: 15 }))];
+    
+    // Style detail table header
+    for (let i = 0; i <= students.length; i++) {
+        const cellRef = XLSX.utils.encode_col(i) + '1';
+        if (ws2[cellRef]) {
+            ws2[cellRef].s = {
+                fill: { fgColor: { rgb: 'FF70AD47' } },
+                font: { bold: true, color: { rgb: 'FFFFFFFF' } },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: {
+                    top: { style: 'thin', color: { rgb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { rgb: 'FF000000' } },
+                    left: { style: 'thin', color: { rgb: 'FF000000' } },
+                    right: { style: 'thin', color: { rgb: 'FF000000' } }
+                }
+            };
+        }
+    }
     
     XLSX.utils.book_append_sheet(wb, ws2, 'Detail Harian');
     
@@ -343,17 +377,22 @@ function exportToPDF() {
         margin: { left: 15, right: 15 },
         columnStyles: {
             0: { cellWidth: 10, halign: 'center' },
-            1: { cellWidth: 60, halign: 'left' },
-            2: { cellWidth: 15, halign: 'center' },
-            3: { cellWidth: 15, halign: 'center' },
-            4: { cellWidth: 15, halign: 'center' },
-            5: { cellWidth: 15, halign: 'center' },
-            6: { cellWidth: 15, halign: 'center' },
-            7: { cellWidth: 18, halign: 'center' }
+            1: { cellWidth: 55, halign: 'left' },
+            2: { cellWidth: 14, halign: 'center', fillColor: [76, 175, 80] },
+            3: { cellWidth: 14, halign: 'center', fillColor: [244, 67, 54] },
+            4: { cellWidth: 14, halign: 'center', fillColor: [255, 152, 0] },
+            5: { cellWidth: 14, halign: 'center', fillColor: [156, 39, 176] },
+            6: { cellWidth: 12, halign: 'center' },
+            7: { cellWidth: 16, halign: 'center' }
         },
-        headStyles: { fillColor: [100, 150, 200], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
-        bodyStyles: { textColor: [0, 0, 0] },
-        alternateRowStyles: { fillColor: [240, 240, 240] }
+        headStyles: { fillColor: [66, 133, 244], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle' },
+        bodyStyles: { textColor: [0, 0, 0], valign: 'middle' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        didDrawPage: (data) => {
+            const footer = 'Halaman ' + (doc.internal.getNumberOfPages());
+            doc.setFontSize(9);
+            doc.text(footer, 195, 280, { align: 'right' });
+        }
     });
     
     // Add new page for daily details if needed
@@ -391,10 +430,22 @@ function exportToPDF() {
             body: dailyTable.slice(1),
             startY: yPos,
             margin: { left: 15, right: 15 },
-            headStyles: { fillColor: [100, 150, 200], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
-            bodyStyles: { textColor: [0, 0, 0] },
-            alternateRowStyles: { fillColor: [240, 240, 240] },
-            fontSize: 8
+            columnStyles: {
+                0: { cellWidth: 25, halign: 'center', fillColor: [66, 133, 244] },
+                1: { halign: 'center', fillColor: [76, 175, 80] },
+                2: { halign: 'center', fillColor: [244, 67, 54] },
+                3: { halign: 'center', fillColor: [255, 152, 0] },
+                4: { halign: 'center', fillColor: [156, 39, 176] }
+            },
+            headStyles: { fillColor: [33, 33, 33], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle' },
+            bodyStyles: { textColor: [0, 0, 0], valign: 'middle' },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            fontSize: 9,
+            didDrawPage: (data) => {
+                const footer = 'Halaman ' + (doc.internal.getNumberOfPages());
+                doc.setFontSize(8);
+                doc.text(footer, 195, 280, { align: 'right' });
+            }
         });
     }
     
