@@ -405,15 +405,20 @@ function exportToPDF() {
             ]);
         });
         
-        doc.autoTable({
-            head: [summaryTable[0]],
-            body: summaryTable.slice(1),
-            startY: yPos,
-            margin: 15,
-            headStyles: { fillColor: [31, 78, 120], textColor: 255, fontSize: 10 },
-            bodyStyles: { fontSize: 9 },
-            alternateRowStyles: { fillColor: [240, 240, 240] }
-        });
+        if (typeof doc.autoTable !== 'function') {
+            console.error('autoTable is not available on jsPDF instance', { doc, jspdf: window.jspdf });
+            alert('Fitur export PDF tidak tersedia: plugin jsPDF AutoTable belum terpasang. Silakan hard-refresh (Ctrl+Shift+R) atau coba buka di browser lain.');
+        } else {
+            doc.autoTable({
+                head: [summaryTable[0]],
+                body: summaryTable.slice(1),
+                startY: yPos,
+                margin: 15,
+                headStyles: { fillColor: [31, 78, 120], textColor: 255, fontSize: 10 },
+                bodyStyles: { fontSize: 9 },
+                alternateRowStyles: { fillColor: [240, 240, 240] }
+            });
+        }
         
         doc.save(`Absensi_${currentClass.name}_${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (error) {
