@@ -465,6 +465,34 @@ function importData(event) {
     reader.readAsText(file);
 }
 
+// ===== DIAGNOSTICS =====
+function runDiagnostics() {
+    const results = [];
+    const jspdfPresent = !!window.jspdf;
+    results.push(`window.jspdf: ${jspdfPresent ? 'OK' : 'missing'}`);
+    try {
+        if (jspdfPresent && window.jspdf.jsPDF) {
+            results.push('window.jspdf.jsPDF: OK');
+            try {
+                const doc = new window.jspdf.jsPDF();
+                const autoTableAvailable = typeof doc.autoTable === 'function';
+                results.push(`doc.autoTable: ${autoTableAvailable ? 'OK' : 'missing'}`);
+            } catch (e) {
+                results.push('Error creating jsPDF instance: ' + e.message);
+            }
+        } else {
+            results.push('window.jspdf.jsPDF: missing');
+            results.push('doc.autoTable: unknown (jsPDF missing)');
+        }
+    } catch (err) {
+        results.push('Diagnostics error: ' + err.message);
+    }
+
+    const msg = results.join('\n');
+    console.log('Diagnostics:', results);
+    alert('Diagnostic hasil:\n' + msg + '\n\nJika ada yang "missing", coba hard-refresh (Ctrl+Shift+R) atau buka di browser lain.');
+}
+
 // ===== EVENT LISTENERS =====
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('save-teacher')?.addEventListener('click', saveTeacher);
@@ -482,4 +510,5 @@ document.addEventListener('DOMContentLoaded', () => {
         const ok = await saveDataToServer();
         alert(ok ? 'Data disimpan' : 'Gagal simpan');
     });
+    document.getElementById('diagnostic-btn')?.addEventListener('click', runDiagnostics);
 });
