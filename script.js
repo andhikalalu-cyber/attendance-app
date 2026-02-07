@@ -306,6 +306,58 @@ function removeStudent(student) {
 }
 
 // ===== EXPORT FUNCTIONS =====
+async function ensureAutoTableAvailable(timeoutMs = 5000) {
+    try {
+        // Quick check: already attached
+        if (window.jspdf && window.jspdf.jsPDF && typeof window.jspdf.jsPDF.prototype.autoTable === 'function') return true;
+
+        // Try to copy from API if present
+        if (window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && typeof window.jspdf.jsPDF.API.autoTable === 'function') {
+            window.jspdf.jsPDF.prototype.autoTable = window.jspdf.jsPDF.API.autoTable;
+            return true;
+        }
+
+        // Try some known global plugin names
+        const possible = [window.jspdfAutoTable, window.jspdfAutotable, window.jspdfPlugin, window.jspdfPluginAutoTable, window.jspdf_autotable];
+        for (const p of possible) {
+            if (p && typeof p === 'function') {
+                // attempt to attach
+                if (window.jspdf && window.jspdf.jsPDF) {
+                    window.jspdf.jsPDF.prototype.autoTable = p;
+                    return true;
+                }
+            }
+        }
+
+        // Dynamically load plugin scripts (try multiple CDNs)
+        const urls = [
+            'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.js?v=20260207.1',
+            'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js?v=20260207.1'
+        ];
+
+        for (const url of urls) {
+            // skip if already added exactly
+            if (document.querySelector(`script[src="${url}"]`)) continue;
+            const loaded = await new Promise((resolve) => {
+                const s = document.createElement('script');
+                s.src = url;
+                s.async = true;
+                s.onload = () => resolve(true);
+                s.onerror = () => resolve(false);
+                document.head.appendChild(s);
+                // safety timeout
+                setTimeout(() => resolve(false), timeoutMs);
+            });
+            if (loaded && window.jspdf && window.jspdf.jsPDF && typeof window.jspdf.jsPDF.prototype.autoTable === 'function') return true;
+        }
+
+        return false;
+    } catch (err) {
+        console.warn('ensureAutoTableAvailable error', err);
+        return false;
+    }
+}
+
 function exportToExcel() {
     if (!currentClass || students.length === 0) {
         alert('Tidak ada data untuk diekspor');
@@ -371,7 +423,9 @@ function exportToExcel() {
     }
 }
 
-function exportToPDF() {
+async function exportToPDF() {
+    // ensure autotable is attached if possible
+    await ensureAutoTableAvailable();
     if (!currentClass || students.length === 0) {
         alert('Tidak ada data untuk diekspor');
         return;
