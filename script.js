@@ -93,6 +93,12 @@ async function markAttendance(student, status) {
 function renderAttendance() {
     const studentList = document.getElementById('student-list');
     studentList.innerHTML = '';
+    
+    if (!students || students.length === 0) {
+        studentList.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Belum ada murid di kelas ini</p>';
+        return;
+    }
+    
     students.forEach(student => {
         const div = document.createElement('div');
         div.className = 'student';
@@ -106,16 +112,43 @@ function renderAttendance() {
             else if (attendanceData[today].izin?.includes(student)) currentStatus = 'izin';
         }
         
-        div.innerHTML = `
-            <span>${student}</span>
-            <div>
-                <button class="btn-status ${currentStatus === 'hadir' ? 'active' : ''}" onclick="markAttendance('${student}', 'hadir')">✓ Hadir</button>
-                <button class="btn-status ${currentStatus === 'alpha' ? 'active' : ''}" onclick="markAttendance('${student}', 'alpha')">✗ Alpha</button>
-                <button class="btn-status ${currentStatus === 'sakit' ? 'active' : ''}" onclick="markAttendance('${student}', 'sakit')">🏥 Sakit</button>
-                <button class="btn-status ${currentStatus === 'izin' ? 'active' : ''}" onclick="markAttendance('${student}', 'izin')">📄 Izin</button>
-                <button class="remove-btn" onclick="removeStudent('${student}')">Hapus</button>
-            </div>
-        `;
+        const hBtn = document.createElement('button');
+        hBtn.className = `btn-status ${currentStatus === 'hadir' ? 'active' : ''}`;
+        hBtn.textContent = '✓ Hadir';
+        hBtn.onclick = () => markAttendance(student, 'hadir');
+        
+        const aBtn = document.createElement('button');
+        aBtn.className = `btn-status ${currentStatus === 'alpha' ? 'active' : ''}`;
+        aBtn.textContent = '✗ Alpha';
+        aBtn.onclick = () => markAttendance(student, 'alpha');
+        
+        const sBtn = document.createElement('button');
+        sBtn.className = `btn-status ${currentStatus === 'sakit' ? 'active' : ''}`;
+        sBtn.textContent = '🏥 Sakit';
+        sBtn.onclick = () => markAttendance(student, 'sakit');
+        
+        const iBtn = document.createElement('button');
+        iBtn.className = `btn-status ${currentStatus === 'izin' ? 'active' : ''}`;
+        iBtn.textContent = '📄 Izin';
+        iBtn.onclick = () => markAttendance(student, 'izin');
+        
+        const rBtn = document.createElement('button');
+        rBtn.className = 'remove-btn';
+        rBtn.textContent = 'Hapus';
+        rBtn.onclick = () => removeStudent(student);
+        
+        const span = document.createElement('span');
+        span.textContent = student;
+        
+        const buttonDiv = document.createElement('div');
+        buttonDiv.appendChild(hBtn);
+        buttonDiv.appendChild(aBtn);
+        buttonDiv.appendChild(sBtn);
+        buttonDiv.appendChild(iBtn);
+        buttonDiv.appendChild(rBtn);
+        
+        div.appendChild(span);
+        div.appendChild(buttonDiv);
         studentList.appendChild(div);
     });
 }
@@ -163,191 +196,32 @@ function renderViewData() {
 }
 
 function exportToExcel() {
-    if (!currentClass) {
-        alert('Tidak ada kelas yang dipilih!');
+    if (!currentClass || students.length === 0) {
+        alert('Tidak ada data untuk diekspor!');
         return;
     }
-    const now = new Date();
-    const exportDateTime = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}`;
-    const dates = Object.keys(attendanceData).sort();
     
-    // Create workbook
+    const now = new Date();
+    const exportDateTime = now.toLocaleDateString('id-ID');
+    const dates = Object.keys(attendanceData).sort();
     const wb = XLSX.utils.book_new();
     
-    // SHEET 1: HEADER & SUMMARY
-    const summaryData = [
-        ['LAPORAN ABSENSI SISWA'],
-        [''],
-        ['Sekolah:', 'SMK Yarsi Mataram'],
-        ['Guru:', teacherName || '-'],
-        ['Kelas:', currentClass.name],
-        ['Tanggal Export:', exportDateTime],
-        ['Total Siswa:', students.length],
-        ['Total Hari Kerja:', dates.length],
-        [''],
-        ['RINGKASAN KEHADIRAN']
-    ];
+    // ===== SHEET 1: RINGKASAN KEHADIRAN =====
+    const summaryData = [];
+    summaryData.push(['RINGKASAN KEHADIRAN SISWA']);
+    summaryData.push(['Sekolah: SMK Yarsi Mataram']);
+    summaryData.push(['Kelas: ' + currentClass.name]);
+    summaryData.push(['Guru: ' + (teacherName || '-')]);
+    summaryData.push(['Tanggal Export: ' + exportDateTime]);
+    summaryData.push(['']);
     
-    // Add summary data
-    summaryData.push(['No', 'Nama Siswa', 'Hadir', 'Alpha', 'Sakit', 'Izin', 'Total Hari', 'Persentase']);
+    // Summary header
+    summaryData.push(['No', 'Nama Siswa', 'Hadir', 'Alpha', 'Sakit', 'Izin', 'Jumlah Hari', 'Persentase Hadir']);
+    
+    // Summary data
     students.forEach((student, idx) => {
         const totalDays = dates.length;
         let hariDays = 0, alphaDays = 0, sakitDays = 0, izinDays = 0;
-        dates.forEach(date => {
-            const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
-            if (dayData.hadir?.includes(student)) hariDays++;
-            if (dayData.alpha?.includes(student)) alphaDays++;
-            if (dayData.sakit?.includes(student)) sakitDays++;
-            if (dayData.izin?.includes(student)) izinDays++;
-        });
-        const percentage = totalDays > 0 ? ((hariDays / totalDays) * 100).toFixed(2) : 0;
-        summaryData.push([
-            idx + 1,
-            student,
-            hariDays,
-            alphaDays,
-            sakitDays,
-            izinDays,
-            totalDays,
-            `${percentage}%`
-        ]);
-    });
-    
-    const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
-    ws1['!cols'] = [{ wch: 5 }, { wch: 25 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 15 }];    
-    // Style summary table header
-    for (let i = 0; i < 8; i++) {
-        const cellRef = XLSX.utils.encode_col(i) + '1';
-        if (ws1[cellRef]) {
-            ws1[cellRef].s = {
-                fill: { fgColor: { rgb: 'FF4472C4' } },
-                font: { bold: true, color: { rgb: 'FFFFFFFF' } },
-                alignment: { horizontal: 'center', vertical: 'center' },
-                border: {
-                    top: { style: 'thin', color: { rgb: 'FF000000' } },
-                    bottom: { style: 'thin', color: { rgb: 'FF000000' } },
-                    left: { style: 'thin', color: { rgb: 'FF000000' } },
-                    right: { style: 'thin', color: { rgb: 'FF000000' } }
-                }
-            };
-        }
-    }    
-    // Set header styling
-    for (let i = 0; i < 8; i++) {
-        const cell = ws1[XLSX.utils.encode_col(i) + '10'];
-        if (cell) cell.s = { bold: true, fill: { fgColor: { rgb: 'FFD966' } }, alignment: { horizontal: 'center' } };
-    }
-    
-    XLSX.utils.book_append_sheet(wb, ws1, 'Ringkasan');
-    
-    // SHEET 2: DETAIL HARIAN
-    const detailData = [
-        ['DETAIL ABSENSI HARIAN'],
-        [''],
-        ['Kelas:', currentClass.name]
-    ];
-    
-    // Create date-wise detail
-    detailData.push(['']);
-    detailData.push(['Tanggal', ...students]);
-    
-    dates.forEach(date => {
-        const row = [date];
-        const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
-        students.forEach(student => {
-            if (dayData.hadir?.includes(student)) {
-                row.push('Hadir');
-            } else if (dayData.alpha?.includes(student)) {
-                row.push('Alpha');
-            } else if (dayData.sakit?.includes(student)) {
-                row.push('Sakit');
-            } else if (dayData.izin?.includes(student)) {
-                row.push('Izin');
-            } else {
-                row.push('-');
-            }
-        });
-        detailData.push(row);
-    });
-    
-    const ws2 = XLSX.utils.aoa_to_sheet(detailData);
-    ws2['!cols'] = [{ wch: 15 }, ...students.map(() => ({ wch: 15 }))];
-    
-    // Style detail table header
-    for (let i = 0; i <= students.length; i++) {
-        const cellRef = XLSX.utils.encode_col(i) + '1';
-        if (ws2[cellRef]) {
-            ws2[cellRef].s = {
-                fill: { fgColor: { rgb: 'FF70AD47' } },
-                font: { bold: true, color: { rgb: 'FFFFFFFF' } },
-                alignment: { horizontal: 'center', vertical: 'center' },
-                border: {
-                    top: { style: 'thin', color: { rgb: 'FF000000' } },
-                    bottom: { style: 'thin', color: { rgb: 'FF000000' } },
-                    left: { style: 'thin', color: { rgb: 'FF000000' } },
-                    right: { style: 'thin', color: { rgb: 'FF000000' } }
-                }
-            };
-        }
-    }
-    
-    XLSX.utils.book_append_sheet(wb, ws2, 'Detail Harian');
-    
-    // Save file
-    const dateStr = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `Absensi_${currentClass.name}_${dateStr}.xlsx`);
-}
-
-function exportToPDF() {
-    if (!currentClass) {
-        alert('Tidak ada kelas yang dipilih!');
-        return;
-    }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const now = new Date();
-    const exportDateTime = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}`;
-    const dates = Object.keys(attendanceData).sort();
-    
-    let yPos = 20;
-    
-    // Header
-    doc.setFontSize(16);
-    doc.text('LAPORAN ABSENSI SISWA', 105, yPos, { align: 'center' });
-    yPos += 10;
-    
-    doc.setFontSize(10);
-    doc.text('SMK Yarsi Mataram', 105, yPos, { align: 'center' });
-    yPos += 8;
-    
-    // Info box
-    doc.setDrawColor(100, 150, 200);
-    doc.rect(15, yPos, 180, 28);
-    doc.setFontSize(9);
-    yPos += 4;
-    doc.text(`Guru: ${teacherName || '-'}`, 20, yPos);
-    yPos += 6;
-    doc.text(`Kelas: ${currentClass.name}`, 20, yPos);
-    yPos += 6;
-    doc.text(`Tanggal Export: ${exportDateTime}`, 20, yPos);
-    yPos += 6;
-    doc.text(`Total Siswa: ${students.length} | Total Hari: ${dates.length}`, 20, yPos);
-    yPos += 12;
-    
-    // Summary Table
-    doc.setFontSize(11);
-    doc.text('RINGKASAN KEHADIRAN', 15, yPos);
-    yPos += 8;
-    
-    const summaryTable = [];
-    summaryTable.push(['No', 'Nama Siswa', 'Hadir', 'Total', 'Persentase']);
-    
-    students.forEach((student, idx) => {
-        const totalDays = dates.length;
-        let hariDays = 0;
-        let alphaDays = 0;
-        let sakitDays = 0;
-        let izinDays = 0;
         
         dates.forEach(date => {
             const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
@@ -357,7 +231,164 @@ function exportToPDF() {
             else if (dayData.izin?.includes(student)) izinDays++;
         });
         
-        const percentage = totalDays > 0 ? ((hariDays / totalDays) * 100).toFixed(2) : 0;
+        const percentage = totalDays > 0 ? Math.round((hariDays / totalDays) * 100) : 0;
+        summaryData.push([
+            idx + 1,
+            student,
+            hariDays,
+            alphaDays,
+            sakitDays,
+            izinDays,
+            totalDays,
+            percentage + '%'
+        ]);
+    });
+    
+    const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+    ws1['!cols'] = [
+        { wch: 5 },   // No
+        { wch: 25 },  // Nama
+        { wch: 10 },  // Hadir
+        { wch: 10 },  // Alpha
+        { wch: 10 },  // Sakit
+        { wch: 10 },  // Izin
+        { wch: 15 },  // Jumlah Hari
+        { wch: 18 }   // Persentase
+    ];
+    
+    // Style header row (row 7 = 0-indexed row 6)
+    for (let i = 0; i < 8; i++) {
+        const cell = ws1[XLSX.utils.encode_col(i) + '7'];
+        if (cell) {
+            cell.s = {
+                fill: { fgColor: { rgb: 'FF1F4E78' } },
+                font: { bold: true, color: { rgb: 'FFFFFFFF' } },
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
+            };
+        }
+    }
+    
+    XLSX.utils.book_append_sheet(wb, ws1, 'Ringkasan');
+    
+    // ===== SHEET 2: DETAIL HARIAN =====
+    if (dates.length > 0) {
+        const detailData = [];
+        detailData.push(['DETAIL ABSENSI HARIAN']);
+        detailData.push(['Kelas: ' + currentClass.name]);
+        detailData.push(['']);
+        
+        // Detail header
+        detailData.push(['Tanggal', ...students]);
+        
+        // Detail data
+        dates.forEach(date => {
+            const row = [date];
+            const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
+            
+            students.forEach(student => {
+                if (dayData.hadir?.includes(student)) {
+                    row.push('H');
+                } else if (dayData.alpha?.includes(student)) {
+                    row.push('A');
+                } else if (dayData.sakit?.includes(student)) {
+                    row.push('S');
+                } else if (dayData.izin?.includes(student)) {
+                    row.push('I');
+                } else {
+                    row.push('-');
+                }
+            });
+            detailData.push(row);
+        });
+        
+        const ws2 = XLSX.utils.aoa_to_sheet(detailData);
+        ws2['!cols'] = [{ wch: 15 }, ...students.map(() => ({ wch: 10 }))];
+        
+        // Style detail header row (row 4 = 0-indexed row 3)
+        for (let i = 0; i <= students.length; i++) {
+            const cell = ws2[XLSX.utils.encode_col(i) + '4'];
+            if (cell) {
+                cell.s = {
+                    fill: { fgColor: { rgb: 'FF0B8437' } },
+                    font: { bold: true, color: { rgb: 'FFFFFFFF' } },
+                    alignment: { horizontal: 'center', vertical: 'center' },
+                    border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
+                };
+            }
+        }
+        
+        XLSX.utils.book_append_sheet(wb, ws2, 'Detail Harian');
+    }
+    
+    // Save file
+    const fileName = `Absensi_${currentClass.name}_${exportDateTime.replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+}
+
+function exportToPDF() {
+    if (!currentClass || students.length === 0) {
+        alert('Tidak ada data untuk diekspor!');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const { autoTable } = jsPDF.jsPDF.prototype;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const dates = Object.keys(attendanceData).sort();
+    const now = new Date();
+    const exportDateTime = now.toLocaleDateString('id-ID');
+    
+    let yPos = 15;
+    
+    // ===== HEADER =====
+    doc.setFontSize(18);
+    doc.setTextColor(31, 78, 120);
+    doc.text('LAPORAN ABSENSI SISWA', 105, yPos, { align: 'center' });
+    yPos += 10;
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text('SMK Yarsi Mataram', 105, yPos, { align: 'center' });
+    yPos += 8;
+    
+    // ===== INFO BOX =====
+    doc.setDrawColor(31, 78, 120);
+    doc.setLineWidth(1);
+    doc.rect(15, yPos, 180, 30);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    yPos += 5;
+    doc.text(`Kelas: ${currentClass.name}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Guru: ${teacherName || '-'} | Tanggal Export: ${exportDateTime}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Total Siswa: ${students.length} | Total Hari: ${dates.length}`, 20, yPos);
+    yPos += 12;
+    
+    // ===== SUMMARY TABLE =====
+    doc.setFontSize(11);
+    doc.setTextColor(31, 78, 120);
+    doc.text('RINGKASAN KEHADIRAN', 15, yPos);
+    yPos += 8;
+    
+    const summaryTable = [];
+    summaryTable.push(['No', 'Nama Siswa', 'Hadir', 'Alpha', 'Sakit', 'Izin', 'Total', 'Persentase']);
+    
+    students.forEach((student, idx) => {
+        const totalDays = dates.length;
+        let hariDays = 0, alphaDays = 0, sakitDays = 0, izinDays = 0;
+        
+        dates.forEach(date => {
+            const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
+            if (dayData.hadir?.includes(student)) hariDays++;
+            else if (dayData.alpha?.includes(student)) alphaDays++;
+            else if (dayData.sakit?.includes(student)) sakitDays++;
+            else if (dayData.izin?.includes(student)) izinDays++;
+        });
+        
+        const percentage = totalDays > 0 ? Math.round((hariDays / totalDays) * 100) : 0;
         summaryTable.push([
             (idx + 1).toString(),
             student,
@@ -371,95 +402,103 @@ function exportToPDF() {
     });
     
     doc.autoTable({
-        head: [['No', 'Nama Siswa', 'Hadir', 'Alpha', 'Sakit', 'Izin', 'Total', 'Persentase']],
+        head: [summaryTable[0]],
         body: summaryTable.slice(1),
         startY: yPos,
         margin: { left: 15, right: 15 },
         columnStyles: {
-            0: { cellWidth: 10, halign: 'center' },
+            0: { cellWidth: 10, halign: 'center', fontStyle: 'bold' },
             1: { cellWidth: 55, halign: 'left' },
-            2: { cellWidth: 14, halign: 'center', fillColor: [76, 175, 80] },
-            3: { cellWidth: 14, halign: 'center', fillColor: [244, 67, 54] },
-            4: { cellWidth: 14, halign: 'center', fillColor: [255, 152, 0] },
-            5: { cellWidth: 14, halign: 'center', fillColor: [156, 39, 176] },
+            2: { cellWidth: 14, halign: 'center' },
+            3: { cellWidth: 14, halign: 'center' },
+            4: { cellWidth: 14, halign: 'center' },
+            5: { cellWidth: 14, halign: 'center' },
             6: { cellWidth: 12, halign: 'center' },
             7: { cellWidth: 16, halign: 'center' }
         },
-        headStyles: { fillColor: [66, 133, 244], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle' },
-        bodyStyles: { textColor: [0, 0, 0], valign: 'middle' },
+        headStyles: {
+            fillColor: [31, 78, 120],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            halign: 'center',
+            valign: 'middle',
+            fontSize: 10
+        },
+        bodyStyles: { textColor: [0, 0, 0], valign: 'middle', fontSize: 9 },
         alternateRowStyles: { fillColor: [245, 245, 245] },
-        didDrawPage: (data) => {
-            const footer = 'Halaman ' + (doc.internal.getNumberOfPages());
-            doc.setFontSize(9);
-            doc.text(footer, 195, 280, { align: 'right' });
-        }
+        didDrawPage: (data) => {}
     });
     
-    // Add new page for daily details if needed
-    if (dates.length > 0) {
+    // ===== DETAIL TABLE (jika ada banyak siswa, tampilkan di halaman 2) =====
+    if (dates.length > 0 && students.length <= 10) {
         yPos = doc.lastAutoTable.finalY + 15;
         
-        if (yPos > 250) {
+        if (yPos > 240) {
             doc.addPage();
-            yPos = 20;
+            yPos = 15;
         }
         
         doc.setFontSize(11);
+        doc.setTextColor(31, 78, 120);
         doc.text('DETAIL ABSENSI HARIAN', 15, yPos);
         yPos += 8;
         
-        // Daily table
-        const dailyTable = [];
-        dailyTable.push(['Tanggal', ...students.slice(0, 4)]);
+        const detailTable = [];
+        detailTable.push(['Tanggal', ...students]);
         
         dates.forEach(date => {
             const row = [date];
             const dayData = attendanceData[date] || { hadir: [], alpha: [], sakit: [], izin: [] };
-            students.slice(0, 4).forEach(student => {
-                if (dayData.hadir?.includes(student)) row.push('✓ H');
-                else if (dayData.alpha?.includes(student)) row.push('✗ A');
-                else if (dayData.sakit?.includes(student)) row.push('🏥 S');
-                else if (dayData.izin?.includes(student)) row.push('📄 I');
-                else row.push('-');
+            
+            students.forEach(student => {
+                if (dayData.hadir?.includes(student)) {
+                    row.push('H');
+                } else if (dayData.alpha?.includes(student)) {
+                    row.push('A');
+                } else if (dayData.sakit?.includes(student)) {
+                    row.push('S');
+                } else if (dayData.izin?.includes(student)) {
+                    row.push('I');
+                } else {
+                    row.push('-');
+                }
             });
-            dailyTable.push(row);
+            detailTable.push(row);
         });
         
         doc.autoTable({
-            head: [dailyTable[0]],
-            body: dailyTable.slice(1),
+            head: [detailTable[0]],
+            body: detailTable.slice(1),
             startY: yPos,
             margin: { left: 15, right: 15 },
             columnStyles: {
-                0: { cellWidth: 25, halign: 'center', fillColor: [66, 133, 244] },
-                1: { halign: 'center', fillColor: [76, 175, 80] },
-                2: { halign: 'center', fillColor: [244, 67, 54] },
-                3: { halign: 'center', fillColor: [255, 152, 0] },
-                4: { halign: 'center', fillColor: [156, 39, 176] }
+                0: { cellWidth: 20, halign: 'center' },
+                ...Object.fromEntries(students.map((_, i) => [i + 1, { cellWidth: (155 - 20) / students.length, halign: 'center' }]))
             },
-            headStyles: { fillColor: [33, 33, 33], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle' },
-            bodyStyles: { textColor: [0, 0, 0], valign: 'middle' },
-            alternateRowStyles: { fillColor: [245, 245, 245] },
-            fontSize: 9,
-            didDrawPage: (data) => {
-                const footer = 'Halaman ' + (doc.internal.getNumberOfPages());
-                doc.setFontSize(8);
-                doc.text(footer, 195, 280, { align: 'right' });
-            }
+            headStyles: {
+                fillColor: [11, 132, 55],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                halign: 'center',
+                fontSize: 9
+            },
+            bodyStyles: { textColor: [0, 0, 0], valign: 'middle', fontSize: 8 },
+            alternateRowStyles: { fillColor: [245, 245, 245] }
         });
     }
     
-    // Footer
+    // ===== FOOTER =====
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
         doc.text(`Halaman ${i} dari ${pageCount}`, 105, 290, { align: 'center' });
-        doc.text(`Generated: ${new Date().toLocaleString('id-ID')}`, 15, 290);
+        doc.text(`Tanggal Cetak: ${new Date().toLocaleString('id-ID')}`, 15, 290);
     }
     
-    const dateStr = new Date().toISOString().slice(0, 10);
-    doc.save(`Absensi_${currentClass.name}_${dateStr}.pdf`);
+    const fileName = `Absensi_${currentClass.name}_${exportDateTime.replace(/\//g, '-')}.pdf`;
+    doc.save(fileName);
 }
 
 function exportData() {
