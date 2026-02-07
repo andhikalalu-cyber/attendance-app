@@ -432,9 +432,76 @@ function exportToPDF() {
                 bodyStyles: { fontSize: 9 },
                 alternateRowStyles: { fillColor: [240, 240, 240] }
             });
+        } else if (window.html2pdf) {
+            // Use html2pdf as a better formatted fallback
+            console.warn('autoTable missing — using html2pdf fallback');
+            const container = document.createElement('div');
+            container.style.padding = '20px';
+            container.style.fontFamily = 'Arial, sans-serif';
+            container.style.fontSize = '12px';
+            const title = document.createElement('h2');
+            title.innerText = 'LAPORAN ABSENSI SISWA';
+            title.style.textAlign = 'center';
+            container.appendChild(title);
+
+            const info = document.createElement('p');
+            info.innerText = `Kelas: ${currentClass.name} | Guru: ${teacherName || '-'} | Total Siswa: ${students.length} | Total Hari: ${dates.length}`;
+            container.appendChild(info);
+
+            const table = document.createElement('table');
+            table.style.borderCollapse = 'collapse';
+            table.style.width = '100%';
+            table.style.marginTop = '8px';
+
+            const thead = document.createElement('thead');
+            const thr = document.createElement('tr');
+            summaryTable[0].forEach(h => {
+                const th = document.createElement('th');
+                th.innerText = h;
+                th.style.border = '1px solid #333';
+                th.style.padding = '6px';
+                th.style.background = '#1f4e78';
+                th.style.color = '#fff';
+                th.style.fontWeight = '600';
+                thr.appendChild(th);
+            });
+            thead.appendChild(thr);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            summaryTable.slice(1).forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.innerText = cell;
+                    td.style.border = '1px solid #ccc';
+                    td.style.padding = '6px';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            container.appendChild(table);
+
+            document.body.appendChild(container);
+            const opt = {
+                margin:       10,
+                filename:     `Absensi_${currentClass.name}_${new Date().toISOString().slice(0,10)}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            try {
+                await html2pdf().set(opt).from(container).save();
+            } catch (e) {
+                console.error('html2pdf error:', e);
+                alert('Gagal export PDF via html2pdf: ' + e.message);
+            } finally {
+                document.body.removeChild(container);
+            }
         } else {
-            // Fallback: simple manual table rendering when autoTable plugin is missing
-            console.warn('autoTable plugin missing — using manual PDF table fallback');
+            // Last-resort manual rendering (keeps previous simple fallback)
+            console.warn('No PDF plugin available — using manual jsPDF rendering');
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const margin = 15;
