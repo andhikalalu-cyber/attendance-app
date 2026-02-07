@@ -151,29 +151,28 @@ function exportToExcel() {
     }
     const now = new Date();
     const exportDateTime = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}`;
-    const data = [
-        { Date: 'Teacher', Present: teacherName, Absent: '' },
-        { Date: 'Class', Present: currentClass.name, Absent: '' },
-        { Date: 'Exported on', Present: exportDateTime, Absent: '' },
-        { Date: '', Present: '', Absent: '' }
-    ];
-
-    // Add daily attendance
     const dates = Object.keys(attendanceData).sort();
-    dates.forEach(date => {
-        const present = attendanceData[date];
-        const absent = students.filter(s => !present.includes(s));
-        data.push({
-            Date: date,
-            Present: present.join(', '),
-            Absent: absent.join(', ')
-        });
-    });
-
-    // Add summary
-    data.push({ Date: '', Present: '', Absent: '' });
-    data.push({ Date: 'Summary', Present: '', Absent: '' });
-    students.forEach(student => {
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    
+    // SHEET 1: HEADER & SUMMARY
+    const summaryData = [
+        ['LAPORAN ABSENSI SISWA'],
+        [''],
+        ['Sekolah:', 'SMK Yarsi Mataram'],
+        ['Guru:', teacherName || '-'],
+        ['Kelas:', currentClass.name],
+        ['Tanggal Export:', exportDateTime],
+        ['Total Siswa:', students.length],
+        ['Total Hari Kerja:', dates.length],
+        [''],
+        ['RINGKASAN KEHADIRAN']
+    ];
+    
+    // Add summary data
+    summaryData.push(['No', 'Nama Siswa', 'Hadir', 'Total Hari', 'Persentase']);
+    students.forEach((student, idx) => {
         const totalDays = dates.length;
         let presentDays = 0;
         dates.forEach(date => {
@@ -182,18 +181,57 @@ function exportToExcel() {
             }
         });
         const percentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(2) : 0;
-        data.push({
-            Date: student,
-            Present: `${presentDays}/${totalDays}`,
-            Absent: `${percentage}%`
-        });
+        summaryData.push([
+            idx + 1,
+            student,
+            presentDays,
+            totalDays,
+            `${percentage}%`
+        ]);
     });
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+    
+    const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+    ws1['!cols'] = [{ wch: 5 }, { wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 15 }];
+    
+    // Set header styling
+    for (let i = 0; i < 5; i++) {
+        const cell = ws1[XLSX.utils.encode_col(i) + '10'];
+        if (cell) cell.s = { bold: true, fill: { fgColor: { rgb: 'FFD966' } }, alignment: { horizontal: 'center' } };
+    }
+    
+    XLSX.utils.book_append_sheet(wb, ws1, 'Ringkasan');
+    
+    // SHEET 2: DETAIL HARIAN
+    const detailData = [
+        ['DETAIL ABSENSI HARIAN'],
+        [''],
+        ['Kelas:', currentClass.name]
+    ];
+    
+    // Create date-wise detail
+    detailData.push(['']);
+    detailData.push(['Tanggal', ...students]);
+    
+    dates.forEach(date => {
+        const row = [date];
+        students.forEach(student => {
+            if (attendanceData[date].includes(student)) {
+                row.push('Hadir');
+            } else {
+                row.push('Absen');
+            }
+        });
+        detailData.push(row);
+    });
+    
+    const ws2 = XLSX.utils.aoa_to_sheet(detailData);
+    ws2['!cols'] = [{ wch: 15 }, ...students.map(() => ({ wch: 15 }))];
+    
+    XLSX.utils.book_append_sheet(wb, ws2, 'Detail Harian');
+    
+    // Save file
     const dateStr = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `attendance_report_${dateStr}.xlsx`);
+    XLSX.writeFile(wb, `Absensi_${currentClass.name}_${dateStr}.xlsx`);
 }
 
 function exportToPDF() {
@@ -202,30 +240,45 @@ function exportToPDF() {
         return;
     }
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jsPDF('p', 'mm', 'a4');
     const now = new Date();
     const exportDateTime = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')}`;
-    doc.text('Attendance Report', 10, 10);
-    doc.text(`Teacher: ${teacherName}`, 10, 20);
-    doc.text(`Class: ${currentClass.name}`, 10, 25);
-    doc.text(`Exported on: ${exportDateTime}`, 10, 35);
-    let y = 45;
-
-    // Daily attendance
     const dates = Object.keys(attendanceData).sort();
-    dates.forEach(date => {
-        const present = attendanceData[date];
-        const absent = students.filter(s => !present.includes(s));
-        doc.text(`${date}: Present - ${present.join(', ')}`, 10, y);
-        y += 10;
-        doc.text(`Absent - ${absent.join(', ')}`, 10, y);
-        y += 10;
-    });
-
-    y += 10;
-    doc.text('Summary:', 10, y);
-    y += 10;
-    students.forEach(student => {
+    
+    let yPos = 20;
+    
+    // Header
+    doc.setFontSize(16);
+    doc.text('LAPORAN ABSENSI SISWA', 105, yPos, { align: 'center' });
+    yPos += 10;
+    
+    doc.setFontSize(10);
+    doc.text('SMK Yarsi Mataram', 105, yPos, { align: 'center' });
+    yPos += 8;
+    
+    // Info box
+    doc.setDrawColor(100, 150, 200);
+    doc.rect(15, yPos, 180, 28);
+    doc.setFontSize(9);
+    yPos += 4;
+    doc.text(`Guru: ${teacherName || '-'}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Kelas: ${currentClass.name}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Tanggal Export: ${exportDateTime}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Total Siswa: ${students.length} | Total Hari: ${dates.length}`, 20, yPos);
+    yPos += 12;
+    
+    // Summary Table
+    doc.setFontSize(11);
+    doc.text('RINGKASAN KEHADIRAN', 15, yPos);
+    yPos += 8;
+    
+    const summaryTable = [];
+    summaryTable.push(['No', 'Nama Siswa', 'Hadir', 'Total', 'Persentase']);
+    
+    students.forEach((student, idx) => {
         const totalDays = dates.length;
         let presentDays = 0;
         dates.forEach(date => {
@@ -234,11 +287,80 @@ function exportToPDF() {
             }
         });
         const percentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(2) : 0;
-        doc.text(`${student}: ${presentDays}/${totalDays} (${percentage}%)`, 10, y);
-        y += 10;
+        summaryTable.push([
+            (idx + 1).toString(),
+            student,
+            presentDays.toString(),
+            totalDays.toString(),
+            `${percentage}%`
+        ]);
     });
+    
+    doc.autoTable({
+        head: [summaryTable[0]],
+        body: summaryTable.slice(1),
+        startY: yPos,
+        margin: { left: 15, right: 15 },
+        columnStyles: {
+            0: { cellWidth: 12, halign: 'center' },
+            1: { cellWidth: 90, halign: 'left' },
+            2: { cellWidth: 25, halign: 'center' },
+            3: { cellWidth: 25, halign: 'center' },
+            4: { cellWidth: 28, halign: 'center' }
+        },
+        headStyles: { fillColor: [100, 150, 200], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+        bodyStyles: { textColor: [0, 0, 0] },
+        alternateRowStyles: { fillColor: [240, 240, 240] }
+    });
+    
+    // Add new page for daily details if needed
+    if (dates.length > 0) {
+        yPos = doc.lastAutoTable.finalY + 15;
+        
+        if (yPos > 250) {
+            doc.addPage();
+            yPos = 20;
+        }
+        
+        doc.setFontSize(11);
+        doc.text('DETAIL ABSENSI HARIAN', 15, yPos);
+        yPos += 8;
+        
+        // Daily table
+        const dailyTable = [];
+        dailyTable.push(['Tanggal', ...students.slice(0, 4)]);
+        
+        dates.forEach(date => {
+            const row = [date];
+            students.slice(0, 4).forEach(student => {
+                row.push(attendanceData[date].includes(student) ? '✓ H' : '✗ A');
+            });
+            dailyTable.push(row);
+        });
+        
+        doc.autoTable({
+            head: [dailyTable[0]],
+            body: dailyTable.slice(1),
+            startY: yPos,
+            margin: { left: 15, right: 15 },
+            headStyles: { fillColor: [100, 150, 200], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+            bodyStyles: { textColor: [0, 0, 0] },
+            alternateRowStyles: { fillColor: [240, 240, 240] },
+            fontSize: 8
+        });
+    }
+    
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(`Halaman ${i} dari ${pageCount}`, 105, 290, { align: 'center' });
+        doc.text(`Generated: ${new Date().toLocaleString('id-ID')}`, 15, 290);
+    }
+    
     const dateStr = new Date().toISOString().slice(0, 10);
-    doc.save(`attendance_report_${dateStr}.pdf`);
+    doc.save(`Absensi_${currentClass.name}_${dateStr}.pdf`);
 }
 
 function exportData() {
