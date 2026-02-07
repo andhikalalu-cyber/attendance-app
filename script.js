@@ -76,6 +76,9 @@ function markAttendance(student, status) {
     currentClass.attendanceData = attendanceData;
     data.classes[currentClassIndex] = currentClass;
     
+    // Auto-save to server
+    await saveDataToServer();
+    
     renderAttendance();
     renderReports();
     renderViewData();
