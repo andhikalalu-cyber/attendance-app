@@ -1,7 +1,7 @@
 {
-  "name": "absen-siswa-smk-yarsi",
+  "name": "absen-siswa-smk-yarsi-mataram",
   "version": "1.0.0",
-  "description": "Absen Siswa SMK Yarsi - Attendance Management System",
+  "description": "Absen Siswa SMK Yarsi Mataram - Attendance Management System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

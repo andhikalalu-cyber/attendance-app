@@ -1,4 +1,4 @@
-# 📋 Absen Siswa SMK Yarsi - Sistem Manajemen Absensi
+# 📋 Absen Siswa SMK Yarsi Mataram - Sistem Manajemen Absensi
 
 ## ✅ Yang Sudah Siap
 
