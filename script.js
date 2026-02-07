@@ -361,8 +361,7 @@ function exportToPDF() {
     }
     
     try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        const doc = new window.jspdf.jsPDF();
         const dates = Object.keys(attendanceData).sort();
         let yPos = 20;
         
