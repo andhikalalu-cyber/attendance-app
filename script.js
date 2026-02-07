@@ -422,10 +422,7 @@ function exportToPDF() {
             ]);
         });
         
-        if (typeof doc.autoTable !== 'function') {
-            console.error('autoTable is not available on jsPDF instance', { doc, jspdf: window.jspdf });
-            alert('Fitur export PDF tidak tersedia: plugin jsPDF AutoTable belum terpasang. Silakan hard-refresh (Ctrl+Shift+R) atau coba buka di browser lain.');
-        } else {
+        if (typeof doc.autoTable === 'function') {
             doc.autoTable({
                 head: [summaryTable[0]],
                 body: summaryTable.slice(1),
@@ -435,6 +432,47 @@ function exportToPDF() {
                 bodyStyles: { fontSize: 9 },
                 alternateRowStyles: { fillColor: [240, 240, 240] }
             });
+        } else {
+            // Fallback: simple manual table rendering when autoTable plugin is missing
+            console.warn('autoTable plugin missing — using manual PDF table fallback');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            const colWidths = [10, 60, 18, 18, 18, 18, 18, 20];
+            const rowHeight = 7;
+            let xStart = margin;
+            let y = yPos;
+
+            doc.setFontSize(10);
+            // header row
+            doc.setFont(undefined, 'bold');
+            summaryTable[0].forEach((cell, ci) => {
+                const w = colWidths[ci] || 30;
+                doc.text(String(cell), xStart + 2, y + 4);
+                xStart += w;
+            });
+            doc.setFont(undefined, 'normal');
+            y += rowHeight;
+
+            // body rows
+            for (let r = 1; r < summaryTable.length; r++) {
+                if (y + rowHeight > pageHeight - margin) {
+                    doc.addPage();
+                    y = margin;
+                }
+                const row = summaryTable[r];
+                let x = margin;
+                row.forEach((cell, ci) => {
+                    const w = colWidths[ci] || 30;
+                    const text = String(cell);
+                    // truncate long text to fit column
+                    const maxChars = Math.floor((w - 4) / 1.8);
+                    const out = text.length > maxChars ? text.slice(0, maxChars - 3) + '...' : text;
+                    doc.text(out, x + 2, y + 4);
+                    x += w;
+                });
+                y += rowHeight;
+            }
         }
         
         doc.save(`Absensi_${currentClass.name}_${new Date().toISOString().slice(0, 10)}.pdf`);
