@@ -6,3 +6,14 @@ attendance.db
 
 # Local Netlify folder
 .netlify
+ 
+# Vercel build output
+.vercel/
+# OS files
+Thumbs.db
+# Logs
+logs/
+# Env
+.env.local
+# Misc
+*.backup

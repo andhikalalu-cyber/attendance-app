@@ -46,11 +46,10 @@ window.addEventListener('load', async () => {
 // ===== DATA MANAGEMENT =====
 async function loadDataFromServer() {
     try {
-        const response = await fetch('https://absen-siswa-smk-yarsi.netlify.app/.netlify/functions/get-attendance');
+        const response = await fetch('/api/api-data', { method: 'GET' });
         if (!response.ok) throw new Error('Network error');
         data = await response.json();
         currentClassIndex = data.currentClassIndex || 0;
-
         if (data.classes && data.classes.length > 0) {
             currentClass = data.classes[currentClassIndex];
             teacherName = currentClass.teacher || '';
@@ -62,7 +61,6 @@ async function loadDataFromServer() {
         console.error('Error loading data:', error);
         data = { classes: [], currentClassIndex: 0 };
     }
-
     renderClassSelect();
     renderAttendance();
     renderReports();
@@ -71,12 +69,14 @@ async function loadDataFromServer() {
 
 async function saveDataToServer() {
     try {
-        await fetch('/.netlify/functions/api-data', {
+        const resp = await fetch('/api/api-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        return true;
+        if (!resp.ok) throw new Error('Network error');
+        const result = await resp.json();
+        return result.ok === true;
     } catch (error) {
         console.error('Error saving:', error);
         return false;
@@ -89,24 +89,20 @@ async function markAttendance(student, status) {
     if (!attendanceData[today]) {
         attendanceData[today] = { hadir: [], alpha: [], sakit: [], izin: [] };
     }
-    
     // Remove from all status arrays first
     ['hadir', 'alpha', 'sakit', 'izin'].forEach(s => {
         attendanceData[today][s] = attendanceData[today][s].filter(name => name !== student);
     });
-    
     // Add to selected status
     if (status) {
         attendanceData[today][status].push(student);
     }
-    
     // Update data
     currentClass.attendanceData = attendanceData;
     data.classes[currentClassIndex] = currentClass;
-    
     // Auto-save to server
     await saveDataToServer();
-    
+    // Pastikan update view data dan laporan setelah absensi
     renderAttendance();
     renderReports();
     renderViewData();
@@ -137,14 +133,28 @@ function renderAttendance() {
             div.innerHTML = `
                 <span>${student}</span>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button class="btn-status ${status === 'hadir' ? 'active' : ''}" onclick="markAttendance('${student}', 'hadir')">✓ Hadir</button>
-                    <button class="btn-status ${status === 'alpha' ? 'active' : ''}" onclick="markAttendance('${student}', 'alpha')">✗ Alpha</button>
-                    <button class="btn-status ${status === 'sakit' ? 'active' : ''}" onclick="markAttendance('${student}', 'sakit')">Sakit</button>
-                    <button class="btn-status ${status === 'izin' ? 'active' : ''}" onclick="markAttendance('${student}', 'izin')">Izin</button>
-                    <button class="remove-btn" onclick="removeStudent('${student}')">Hapus</button>
+                    <button class="btn-status ${status === 'hadir' ? 'active' : ''}" data-student="${student}" data-status="hadir">✓ Hadir</button>
+                    <button class="btn-status ${status === 'alpha' ? 'active' : ''}" data-student="${student}" data-status="alpha">✗ Alpha</button>
+                    <button class="btn-status ${status === 'sakit' ? 'active' : ''}" data-student="${student}" data-status="sakit">Sakit</button>
+                    <button class="btn-status ${status === 'izin' ? 'active' : ''}" data-student="${student}" data-status="izin">Izin</button>
+                    <button class="remove-btn" data-student="${student}" data-remove="true">Hapus</button>
                 </div>
             `;
             studentList.appendChild(div);
+        });
+        // Tambahkan event listener secara langsung agar CSP tidak memblokir
+        studentList.querySelectorAll('.btn-status').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const student = this.getAttribute('data-student');
+                const status = this.getAttribute('data-status');
+                markAttendance(student, status);
+            });
+        });
+        studentList.querySelectorAll('.remove-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const student = this.getAttribute('data-student');
+                removeStudent(student);
+            });
         });
     } catch (err) {
         const studentList = document.getElementById('student-list');
@@ -166,23 +176,29 @@ function renderAttendance() {
 function renderReports() {
     const reports = document.getElementById('reports');
     reports.innerHTML = '';
-    
     const totalDays = Object.keys(attendanceData).length;
-    if (totalDays === 0) {
-        reports.innerHTML = '<p style="color: #999;">Tidak ada data absensi</p>';
+    if (totalDays === 0 || !students || students.length === 0) {
+        reports.innerHTML = '<p style="color: #999;">Tidak ada data absensi atau murid</p>';
         return;
     }
-    
+    // Tampilkan tanggal dan waktu
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID');
+    const timeStr = now.toLocaleTimeString('id-ID');
+    const infoDiv = document.createElement('div');
+    infoDiv.style.marginBottom = '8px';
+    infoDiv.innerHTML = `<strong>Tanggal:</strong> ${dateStr} <strong>Waktu:</strong> ${timeStr}`;
+    reports.appendChild(infoDiv);
+
     students.forEach(student => {
-        let hariDays = 0;
+        let hadirDays = 0;
         Object.values(attendanceData).forEach(day => {
-            if (day.hadir?.includes(student)) hariDays++;
+            if (day.hadir && day.hadir.includes(student)) hadirDays++;
         });
-        
-        const percentage = totalDays > 0 ? Math.round((hariDays / totalDays) * 100) : 0;
+        const percentage = totalDays > 0 ? Math.round((hadirDays / totalDays) * 100) : 0;
         const div = document.createElement('div');
         div.className = 'report-item';
-        div.innerHTML = `<strong>${student}</strong>: ${hariDays}/${totalDays} hari (${percentage}%)`;
+        div.innerHTML = `<strong>${student}</strong>: ${hadirDays}/${totalDays} hari (${percentage}%)`;
         reports.appendChild(div);
     });
 }
@@ -842,36 +858,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 800);
 
     // ...existing code...
-    const elSaveTeacher = document.getElementById('save-teacher');
-    if (elSaveTeacher) elSaveTeacher.addEventListener('click', saveTeacher);
-    const elAddClass = document.getElementById('add-class');
-    if (elAddClass) elAddClass.addEventListener('click', addClass);
-    const elDeleteClass = document.getElementById('delete-class');
-    if (elDeleteClass) elDeleteClass.addEventListener('click', deleteClass);
-    const elAddStudent = document.getElementById('add-student');
-    if (elAddStudent) elAddStudent.addEventListener('click', addStudent);
-    const elClassSelect = document.getElementById('class-select');
-    if (elClassSelect) elClassSelect.addEventListener('change', (e) => selectClass(parseInt(e.target.value)));
-    const elExportExcel = document.getElementById('export-excel');
-    if (elExportExcel) elExportExcel.addEventListener('click', exportToExcel);
-    const elExportPdf = document.getElementById('export-pdf');
-    if (elExportPdf) elExportPdf.addEventListener('click', exportToPDF);
-    const elExportData = document.getElementById('export-data');
-    if (elExportData) elExportData.addEventListener('click', exportData);
-    const elImportBtn = document.getElementById('import-data-btn');
-    if (elImportBtn) elImportBtn.addEventListener('click', () => {
-        const inp = document.getElementById('import-data');
-        if (inp) inp.click();
-    });
-    const elImportData = document.getElementById('import-data');
-    if (elImportData) elImportData.addEventListener('change', importData);
-    const elPrint = document.getElementById('print-page');
-    if (elPrint) elPrint.addEventListener('click', () => window.print());
-    const elSaveData = document.getElementById('save-data');
-    if (elSaveData) elSaveData.addEventListener('click', async () => {
-        const ok = await saveDataToServer();
-        alert(ok ? 'Data disimpan' : 'Gagal simpan');
-    });
-    const elDiag = document.getElementById('diagnostic-btn');
-    if (elDiag) elDiag.addEventListener('click', runDiagnostics);
+    try {
+        const elSaveTeacher = document.getElementById('save-teacher');
+        if (elSaveTeacher) elSaveTeacher.addEventListener('click', saveTeacher);
+        const elAddClass = document.getElementById('add-class');
+        if (elAddClass) elAddClass.addEventListener('click', addClass);
+        const elDeleteClass = document.getElementById('delete-class');
+        if (elDeleteClass) elDeleteClass.addEventListener('click', deleteClass);
+        const elAddStudent = document.getElementById('add-student');
+        if (elAddStudent) elAddStudent.addEventListener('click', addStudent);
+        const elClassSelect = document.getElementById('class-select');
+        if (elClassSelect) elClassSelect.addEventListener('change', (e) => selectClass(parseInt(e.target.value)));
+        const elExportExcel = document.getElementById('export-excel');
+        if (elExportExcel) elExportExcel.addEventListener('click', exportToExcel);
+        const elExportPdf = document.getElementById('export-pdf');
+        if (elExportPdf) elExportPdf.addEventListener('click', exportToPDF);
+        const elExportData = document.getElementById('export-data');
+        if (elExportData) elExportData.addEventListener('click', exportData);
+        const elImportBtn = document.getElementById('import-data-btn');
+        if (elImportBtn) elImportBtn.addEventListener('click', () => {
+            const inp = document.getElementById('import-data');
+            if (inp) inp.click();
+        });
+        const elImportData = document.getElementById('import-data');
+        if (elImportData) elImportData.addEventListener('change', importData);
+        const elPrint = document.getElementById('print-page');
+        if (elPrint) elPrint.addEventListener('click', () => window.print());
+        const elSaveData = document.getElementById('save-data');
+        if (elSaveData) elSaveData.addEventListener('click', async () => {
+            const ok = await saveDataToServer();
+            alert(ok ? 'Data disimpan' : 'Gagal simpan');
+        });
+        const elDiag = document.getElementById('diagnostic-btn');
+        if (elDiag) elDiag.addEventListener('click', runDiagnostics);
+    } catch (err) {
+        document.body.insertAdjacentHTML('afterbegin', `<div style="background:#ffdddd;color:#900;padding:12px;font-weight:bold;">Error in event listeners: ${err.message}</div>`);
+        console.error('Event listener error:', err);
+    }
 });
