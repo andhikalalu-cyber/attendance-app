@@ -17,3 +17,5 @@ logs/
 .env.local
 # Misc
 *.backup
+.vercel
+.env*.local
